@@ -142,3 +142,24 @@ Courts, Arenas, Buttons, Streamers, Cameras, Lives, Replays, CropJobs, YoutubeCr
 - **Lambda:** Pay per invocation — good for APIs, event handlers
 - **GCP VMs:** Used specifically for streaming (cheaper egress than AWS)
 - **IoT Core:** Pay per message — budget for heartbeats (1000 devices × 6/min = 6000 msgs/min)
+
+
+## Device Discovery on Arena LAN
+
+**Devices do NOT have static IPs.** The edge mini PC must discover devices dynamically.
+
+### How existing components find devices
+- **button-firmware-update** component: scans the local network (ARP discovery) to find ESP32 buttons by MAC address
+- **Camera IPs**: stored in the Cameras DynamoDB table, associated with courts/arenas
+- **Button MACs**: stored in the Buttons DynamoDB table, associated with courts
+
+### Pattern for new components that need device IPs
+1. Query DynamoDB for the arena devices (cameras by IP, buttons by MAC)
+2. For buttons: use ARP to resolve MAC to IP on the local network
+3. Cache results locally, refresh periodically (devices can change IPs via DHCP)
+4. Do NOT hardcode IPs or pass them as static environment variables
+
+### DynamoDB tables with device info
+- Cameras: has ip field, linked to courts/arenas
+- Buttons: has macAddress field, linked to courts
+- Arenas: has arena metadata, the edge mini PC knows its arena ID from Greengrass config
