@@ -1,33 +1,37 @@
 # Feature: Arena Network Latency Monitoring
 
 ## Summary
-Real-time dashboard in the backoffice showing ESP32 device ping latency to prevent stream failures during live events. Arena operators can spot network issues before they affect broadcasts, with color-coded status indicators and arena health summaries.
+Enable real-time monitoring of network latency between IoT devices in arenas and AWS. Arena operators can view device health status in the backoffice to proactively troubleshoot connectivity issues before they impact live streams.
 
 ## User Journeys
-1. Arena operator opens backoffice before a live event
-2. Navigates to their arena page and clicks the "Latency" tab
-3. Views table of all ESP32 devices with current ping times (green <200ms, yellow 200-500ms, red >500ms or offline)
-4. Identifies devices with high latency or offline status
-5. Physically checks problematic devices before event starts
+1. **Arena Operator - Device Health Check**: Operator opens arena details page in backoffice, clicks "Latency" tab, sees list of all devices with latest ping times and color-coded health status (green: <100ms, yellow: 100-500ms, red: >500ms or offline)
 
-6. Ops team member opens summary page showing all arenas
-7. Views overall health status per arena to identify problem locations
-8. Escalates issues to relevant arena operators
+2. **Arena Operator - Arena Overview**: Operator views summary dashboard showing all arenas with overall health status, can quickly identify which arenas have connectivity issues
+
+3. **Troubleshooting During Event**: During a live stream, operator notices stream quality issues, checks latency tab to see if specific devices have high ping times, can proactively address network problems
 
 ## Acceptance Criteria
-- [ ] Backoffice displays "Latency" tab on arena pages showing all ESP32 devices
-- [ ] Device table shows: device ID, last ping time, latency in ms, status color (green/yellow/red)
-- [ ] Color coding: green (<200ms), yellow (200-500ms), red (>500ms or offline)
-- [ ] Summary page shows all arenas with overall health indicators
-- [ ] Data updates in real-time (refreshes every 30 seconds or less)
-- [ ] 30 days of ping history stored for troubleshooting
+- [ ] IoT Edge mini PC pings all ESP32 buttons on local network every 30 seconds
+- [ ] Ping results (latency in ms, timestamp, success/failure) are sent to AWS
+- [ ] Backoffice arena details page has new "Latency" tab showing device health
+- [ ] Device health uses color coding: green (<100ms), yellow (100-500ms), red (>500ms or offline)
+- [ ] Summary dashboard shows arena-level health rollup
+- [ ] 30 days of ping data retained for historical reference
+- [ ] Real-time updates in backoffice (refresh every 30-60 seconds)
 
 ## Scale & Volume
-1000 ESP32 devices across 50+ arenas, each pinging every 30 seconds. Peak load: 2000 pings/minute during live events. Data retention: 30 days minimum (~29M records/month, ~5.8 GB).
+- 1000 devices across 50+ arenas
+- ~20 devices per arena
+- Ping frequency: every 30 seconds
+- Peak load: ~2000 pings per minute (~3M pings per day)
+- Data retention: 30 days
 
 ## Affected Projects
-- smashlive--backoffice: Add Latency tab to arena pages, summary health page
-- smashlive--infra: API endpoints for ping data, time-series storage (S3 + Athena recommended)
+- smashlive--infra: New Greengrass component for ping monitoring, IoT Core topic, Lambda for data ingestion, S3+Athena for time-series storage
+- smashlive--backoffice: New latency tab on arena details page, arena health summary dashboard
 
 ## Constraints
-Must integrate with existing React + Vite + MUI backoffice. No new frontend frameworks. Out of scope for v1: historical charts, alerting/notifications, device grouping by location.
+- v1 scope: Basic device status display only
+- Out of scope: Historical charts, alerting/notifications, device grouping by court
+- Must not impact existing button functionality or network performance
+- Data storage cost-optimized for high-volume time-series data
